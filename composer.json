@@ -11,5 +11,7 @@
             "email": "963353840@qq.com"
         }
     ],
-    "require": {}
+    "require": {
+        "php": ">=7.0"
+    }
 }
