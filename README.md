@@ -30,8 +30,10 @@ app_pid_file=/var/run/swoole.pid  #pid文件
 ### 可以将脚本放到 /etc/init.d目录下面 配合 chkconfig  命令实现开机自动运行 chkconfig --add smallApi
 
 #配置文件
+```
 config/server.php
     'bind_addr' => '0.0.0.0',  //绑定地址
     'port' => 82,              //绑定端口
     'debug_ip' => ['192.168.30.1', '127.0.0.1'],//限制日志输出的服务器
     'swoole' => []             //服务器配置参数
+```
