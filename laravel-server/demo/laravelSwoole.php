@@ -23,7 +23,7 @@ require __DIR__ . '/../../../autoload.php';
 |
 */
 
-$app = require_once __DIR__ . '/bootstrap/app.php';
+$app = require_once __DIR__ . '/../../../../bootstrap/app.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -38,13 +38,8 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 */
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
-$serverConfig = require_once __DIR__ . '/config/server.php';
+$serverConfig = require_once __DIR__ . '/../config/server.php';
 $server = new \LaravelServer\LaravelServer($serverConfig, $kernel);
 $server->start();
 
-//$response = $kernel->handle(
-//    $request = Illuminate\Http\Request::capture()
-//);
-//$response->send();
-
-$kernel->terminate($request, $response);
+//$kernel->terminate($request, $response);

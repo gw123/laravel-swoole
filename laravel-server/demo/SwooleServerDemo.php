@@ -10,7 +10,7 @@ use swoole_websocket_server;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
-abstract class SwooleServer
+class SwooleServerDemo
 {
     /***
      * @var  \swoole_websocket_server
@@ -127,7 +127,18 @@ abstract class SwooleServer
     /***
      * 处理http 协议
      */
-    abstract public function onRequest(swoole_http_request $request, \swoole_http_response $sw_response);
+    public function onRequest(swoole_http_request $request, \swoole_http_response $sw_response)
+    {
+        if (isset($request->header['sec-websocket-version'])) {
+            SwooleLog::info('sec-websocket-version');
+            return;
+        }
+        SwooleLog::info('onRequest');
+        ob_start();
+        $content = ob_get_contents();
+        ob_end_clean();
+        $sw_response->end($content);
+    }
 
 
     public function onHandShake(swoole_http_request $request, swoole_http_response $response)
@@ -143,19 +154,59 @@ abstract class SwooleServer
         SwooleLog::debug('onOpen');
         $fd = $request->fd;
         $data['ip'] = $request->server['remote_addr'];
+        //self::$web_socket_fds->set($fd, $data);
     }
 
-    abstract public function onMessage(swoole_websocket_server $server, swoole_websocket_frame $frame);
+    public function onMessage(swoole_websocket_server $server, swoole_websocket_frame $frame)
+    {
+        SwooleLog::debug('onMessage');
+        $server->push($frame->fd, $frame->data);
+    }
+
+    public function parseMessage(swoole_websocket_frame $frame)
+    {
+        return $frame->data;
+    }
+
 
     /***
      * websocket 断开连接
      */
-    public function onClose(swoole_websocket_server $server, int $fd, int $reactorId)
+    public function onClose()
     {
-        SwooleLog::info('client close');
+        SwooleLog::info('close');
     }
 
-    abstract public function onTask(swoole_websocket_server $server, $task_id, $src_worker_id, $data);
+    public function onTask(swoole_websocket_server $server, $task_id, $src_worker_id, $data)
+    {
+        if (!isset($data['class'])) {
+            SwooleLog::error('必须指定任务类名' . json_encode($data), __FILE__, __LINE__);
+            $server->finish(['code' => SwooleLog::ERR_TASK_MISSTASKNAME, 'msg' => '必须指定任务类名']);
+            return;
+        }
+        if (!class_exists($data['class'])) {
+            SwooleLog::error('指定任务类不存在:' . $data['class'], __FILE__, __LINE__);
+            $server->finish(['code' => SwooleLog::ERR_NOYFOUND, 'msg' => '指定任务类不存在']);
+            return;
+        }
+        if (!isset($data['data'])) {
+            $data['data'] = [];
+        }
+
+        $task = new $data['class']($server, $task_id, $src_worker_id, $data['data']);
+        if (!$task->beforeRun()) {
+            $server->finish(['code' => SwooleLog::ERR_TASK_CHECK_FAILED, 'msg' => $task->getErrors()]);
+            return;
+        }
+        $task_result = $task->run();
+//        $wrap_result['task_id'] = $task_id;
+//        $wrap_result['src_worker_id'] = $src_worker_id;
+//        $wrap_result['class'] = $data['class'];
+//        $wrap_result['input'] = $data['data'];
+//        $wrap_result['result'] = $task_result;
+
+        $server->finish(serialize($task));
+    }
 
     public function onFinish($server, $task_id, $data)
     {
