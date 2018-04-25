@@ -3,19 +3,18 @@ namespace LaravelServer;
 
 use Illuminate\Http\Request;
 use swoole_http_request;
-use swoole_http_response;
 use swoole_process;
-use swoole_websocket_frame;
 use swoole_websocket_server;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
-class SwooleServer
+class LaravelServer
 {
     /***
      * @var  \swoole_websocket_server
      */
     protected $swooleServer;
+
     protected $bindAddr;
     protected $bindPort;
     protected $debugIps;
@@ -34,7 +33,7 @@ class SwooleServer
      */
     protected $kernel;
 
-    public function __construct($config)
+    public function __construct($config, \Illuminate\Contracts\Http\Kernel $kernel)
     {
         if (isset($config['bind_addr'])) {
             $this->bindAddr = $config['bind_addr'];
@@ -48,6 +47,7 @@ class SwooleServer
         }
 
         $this->config = isset($config['swoole']) ? $config['swoole'] : [];
+        $this->kernel = $kernel;
         $this->boot();
     }
 
@@ -60,134 +60,93 @@ class SwooleServer
 
         $swooleServer->on('Start', array($this, 'onStart'));
         $swooleServer->on('WorkerStart', array($this, 'onWorkerStart'));
-        $swooleServer->on('Open', array($this, 'onOpen'));
-        //$swooleServer->on('Connect', array($this, 'onConnect'));
-        //$swooleServer->on('Receive', array($this, 'onReceive'));
-        $swooleServer->on('Message', array($this, 'onMessage'));
-        $swooleServer->on('Request', array($this, 'onRequest'));
+        $swooleServer->on('Receive', array($this, 'onReceive'));
         $swooleServer->on('Close', array($this, 'onClose'));
         $swooleServer->on('WorkerStop', array($this, 'onWorkStop'));
-
+        $swooleServer->on('Open', array($this, 'onOpen'));
+        $swooleServer->on('Message', array($this, 'onMessage'));
+        $swooleServer->on('Request', array($this, 'onRequest'));
         $swooleServer->on('Task', array($this, 'onTask'));
         $swooleServer->on('Finish', array($this, 'onFinish'));
-        $swooleServer->on('Shutdown', array($this, 'onShutdown'));
+        //$swooleServer->start();
+
         $this->swooleServer = $swooleServer;
 
         //记录 websocket 连接
         self::$web_socket_fds = new  \Swoole\Table(65536);
-        self::$web_socket_fds->column('session_id', \Swoole\Table::TYPE_STRING, 64);
+        self::$web_socket_fds->column('session_id', \Swoole\Table::TYPE_STRING, 48);
         self::$web_socket_fds->column('is_debug', \Swoole\Table::TYPE_INT, 1);
         self::$web_socket_fds->column('ip', \Swoole\Table::TYPE_STRING, 15);
         self::$web_socket_fds->create();
     }
 
-    public function createProcess()
-    {
-        /***
-         * 管理进程，在这里实现远程重启操作
-         */
-        $channel = $this->createChannel();
-        $server = $this->swooleServer;
-        $process = new \swoole_process(function (swoole_process $process) use ($server, $channel) {
-            swoole_timer_tick(1000, function () use ($server, $channel) {
-                while ($data = $channel->pop()) {
-                    if ($data == 'reload') {
-                        echo "Reload\n";
-                        $this->swooleServer->reload();
-                    }
-                }
-            });
-
-            /***
-             * 定时更新系统信息
-             */
-            swoole_timer_tick(2000, function () use ($server, $channel) {
-                exec('top -n 1 -b -c', $out);
-            });
-
-        });
-        $this->swooleServer->addProcess($process);
-    }
-
-    /***
-     * 创建channel  连接
-     */
-    public function createChannel()
-    {
-        $channel = new \Swoole\Channel(60000);
-        self::$channel = $channel;
-    }
-
-    public function onStart(swoole_websocket_server $server)
-    {
-        //创建用户管理进程
-        SwooleLog::debug('主线程创建');
-    }
-
-    /***
-     * 处理http 协议
-     */
-    public function onRequest(swoole_http_request $request, \swoole_http_response $sw_response)
-    {
-        if (isset($request->header['sec-websocket-version'])) {
-            SwooleLog::info('sec-websocket-version');
-            return;
-        }
-        SwooleLog::info('onRequest');
-        ob_start();
-        $content = ob_get_contents();
-        ob_end_clean();
-        $sw_response->end($content);
-    }
-
-
-    public function onHandShake(swoole_http_request $request, swoole_http_response $response)
-    {
-        SwooleLog::debug('onHandShake');
-    }
-
-    /***
-     *  webscoket 协议握手成功后触发 ,在指定hangShake握手协议后不会触发onOpen
-     */
     public function onOpen(swoole_websocket_server $server, swoole_http_request $request)
     {
-        SwooleLog::debug('onOpen');
         $fd = $request->fd;
         $data['ip'] = $request->server['remote_addr'];
         //self::$web_socket_fds->set($fd, $data);
     }
 
-    public function onMessage(swoole_websocket_server $server, swoole_websocket_frame  $frame)
+    public function onMessage(swoole_websocket_server $server, $frame)
     {
-        SwooleLog::debug('onMessage');
-        $frame = json_decode($frame->data);
-        if(!$frame){
-            $this->createWebsocketFrame();
-            $server->push();
-        }
-        var_dump($frame->fd);
         //self::dispatchWs($frame, $server);
-        //foreach($server->connections as $fd)
-        //{
-        //$server->send($fd, "hello");
-        //}
-         $server->push($frame->fd, "this is server");
     }
 
-    public function createWebsocketFrame($data ,$code = 200 ,$header)
+    public function onReceive(swoole_websocket_server $server, $frame)
     {
-        $frame['body']   = $data;
-        $frame['header'] = $header;
-        $frame['code'] = 200;
-        return $frame;
+
     }
 
-    /***
-     * websocket 断开连接
-     */
-    public function onClose()
+    public function onRequest(swoole_http_request $request, \swoole_http_response $sw_response)
     {
-        SwooleLog::info('close');
+        if (isset($request->header['sec-websocket-version'])) {
+            return;
+        }
+
+        Request::enableHttpMethodParameterOverride();
+        $baseRequest = $this->createRequest($request);
+
+        $request = Request::createFromBase($baseRequest);
+        $response = $this->kernel->handle($request);
+
+        ob_start();
+        $response->send();
+        $content = ob_get_contents();
+        ob_end_clean();
+        $sw_response->end($content);
+    }
+
+    protected function createRequest(swoole_http_request $sw_request)
+    {
+        $get = $sw_request->get ? $sw_request->get : [];
+        $post = $sw_request->post ? $sw_request->post : [];
+        $cookie = $sw_request->cookie ? $sw_request->cookie : [];
+        $files = $sw_request->files ? $sw_request->files : [];
+        $servers = $sw_request->server ? $sw_request->server : [];
+        $headers = $sw_request->server ? $sw_request->header : [];
+        if (isset($sw_request->header['content-type']) &&
+            strpos($sw_request->header['content-type'], 'application/json') !== false
+        ) {
+            $post = json_decode($sw_request->rawContent() ,true);
+        }
+
+        $serverConverts = [];
+        foreach ($headers as $key => $val) {
+            $serverConverts['HTTP_' . strtoupper($key)] = $val;
+        }
+        foreach ($servers as $key => $val) {
+            $serverConverts[strtoupper($key)] = $val;
+        }
+        $request = new SymfonyRequest($get, $post, array(), $cookie, $files, $serverConverts,$sw_request->rawContent());
+
+        if (0 === strpos($request->headers->get('CONTENT_TYPE'), 'application/x-www-form-urlencoded')
+            && in_array(strtoupper($request->server->get('REQUEST_METHOD', 'GET')), array('PUT', 'DELETE', 'PATCH'))
+        ) {
+            parse_str($request->getContent(), $data);
+            $request->request = new ParameterBag($data);
+        }
+
+        return $request;
     }
 
     public function onTask(swoole_websocket_server $server, $task_id, $src_worker_id, $data)
@@ -226,34 +185,72 @@ class SwooleServer
 
     }
 
-    /***
-     * 启动work进程
-     */
-    public function onWorkerStart(swoole_websocket_server $server, int $process_id)
+    public function onStart()
+    {
+        $str = "Swoole server is started at {$this->bindAddr}:{$this->bindPort}\n";
+        SwooleLog::info($str);
+    }
+
+    public function onWorkerStart()
     {
         if (!$this->swooleServer->taskworker) {
-            $str = "Worker 进程。。。";
-            //Reload
+            $str = "Worker 进程 初始化框架。。。\n";
         } else {
-            $str = "Task 进程。。。";
+            $str = "Task 初始化框架。。。\n";
         }
-        SwooleLog::debug($str);
+        echo $str;
+        //初始化进程生命周期的内容
     }
 
     public function onWorkStop($server, $worker_id)
     {
         $str = "进程结束 销毁内存";
-        SwooleLog::debug($str);
+        echo $str;
+    }
+
+    public function onClose()
+    {
+        //SwooleLog::info('close');
+    }
+
+    public function createProcess()
+    {
+        /***
+         * 管理进程，在这里实现远程重启操作
+         */
+        $channel = $this->createChannel();
+        $server = $this->swooleServer;
+        $process = new \swoole_process(function (swoole_process $process) use ($server, $channel) {
+            swoole_timer_tick(1000, function () use ($server, $channel) {
+                while ($data = $channel->pop()) {
+                    if ($data == 'reload') {
+                        echo "Reload\n";
+                        $this->swooleServer->reload();
+                    }
+                }
+            });
+
+            /***
+             * 定时更新系统信息
+             */
+            swoole_timer_tick(2000, function () use ($server, $channel) {
+                exec('top -n 1 -b -c', $out);
+            });
+
+        });
+        $this->swooleServer->addProcess($process);
+    }
+
+    public function createChannel()
+    {
+        //创建channel  连接
+        $channel = new \Swoole\Channel(60000);
+        self::$channel = $channel;
     }
 
     public function start()
     {
         $this->swooleServer->start();
-    }
-
-    public function onShutdown(swoole_websocket_server $server)
-    {
-        SwooleLog::info('服务关闭');
     }
 
     public function errorHandel()
@@ -275,4 +272,8 @@ class SwooleServer
         });
     }
 
+    public function output($msg)
+    {
+        echo $msg;
+    }
 }

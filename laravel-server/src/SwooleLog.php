@@ -66,6 +66,6 @@ class  SwooleLog
         $task['place'] = $content['place'];
         $task['group'] = $group;
         $task['fd'] = $fd;
-        echo $content['msg'];
+        echo $content['msg']."\n";
     }
 }
