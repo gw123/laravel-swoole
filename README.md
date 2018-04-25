@@ -20,6 +20,7 @@ app_entry=${prefix}/api/api.php   #入口脚本位置
 app_pid_file=/var/run/swoole.pid  #pid文件
 ```
 # 运行
+- chmod +x server
 - ./smallApi start 启动服务
 - ./smallApi stop 关闭服务
 - ./smallApi reload 热重启服务，类似nginx reload
