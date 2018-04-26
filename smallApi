@@ -10,7 +10,7 @@
 
 prefix=/data/wwwroot/laravelTest
 php_bin=/data/install/php7.2/bin/php
-app_entry=${prefix}/vendor/laravel-swoole/laravel-server/demo/laravelSwoole.php
+app_entry=${prefix}/vendor/gw123/laravel-swoole/laravel-server/demo/laravelSwoole.php
 app_pid_file=/var/run/swoole.pid
 
 #echo ${app_entry}
