@@ -1,10 +1,9 @@
 <?php
-
+// 测试服务器的webscoket 连接
 $cli = new swoole_http_client('127.0.0.1', 82);
 
 $cli->on('message', function ($_cli, $frame) {
     var_dump($frame);
-    //file_put_contents('./local.log',json_encode($frame) ,FILE_APPEND);
 });
 
 

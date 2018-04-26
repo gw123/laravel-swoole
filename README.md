@@ -37,3 +37,22 @@ config/server.php
     'debug_ip' => ['192.168.30.1', '127.0.0.1'],//限制日志输出的服务器
     'swoole' => []             //服务器配置参数
 ```
+
+# demo文件夹 示例代码说明(下面代码直接 php scriptname 方式运行)
+-   baseServer 基础服务
+-   laravelServer 基于laravel框架的swoole服务器
+-   wsClient 模拟测试laraveServer服务器的websocket请求
+
+
+#webscoket 请求协议详细参考 wsClient代码
+```
+    $frame = '{"header":{},"get":{"username":"gw123","password":123456},"post":{},"body":"value"}';
+    $frame = '{"header":{"path_info":"/test"},"get":{"username":"gw123","password":123456},"post":{},"body":"value"}';
+    $frame = '{"header":{"path_info":"/gogo"},"get":{"username":"gw123","password":123456},"post":{},"body":"value"}';
+    
+    header 同http协议中的 header ,唯一不同的是需要指定  path_info 等同get的请求路径.
+    所以协议默认请求下是模拟get请求 提交方式为 application/www-url-decode
+    get  可以指定get参数
+    post 指定post参数 需要配置header  设置REQUEST_METHOD为 POST
+    body 是原始请求体用来实现一些特殊的请求(完善中)
+```
