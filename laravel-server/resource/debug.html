@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html style="font-size: 40px;">
+<head>
+    <meta charset="utf-8">
+    <title>Vue 测试实例 - 菜鸟教程(runoob.com)</title>
+    <script src="https://cdn.bootcss.com/vue/2.4.2/vue.min.js"></script>
+</head>
+<style>
+    body {
+        background-color: #e5e5e5;
+        padding: 1px;
+    }
+    *{margin: 0px ;padding: 0px; box-sizing: border-box}
+    h1{font-size: .6em}
+    .control{ font-size: 0.4em }
+    .control button,.control input { padding: 5px 0px}
+
+    .sub-control{width: 100%; margin-bottom: 4px;}
+    .sub-control input{width: 80%}
+    .sub-control button{width: 19%;float: right;}
+    .sub-control textarea{width: 80%;min-height: 80px;}
+    .log-group-wrap{ min-height: 800px;background-color: #fffcf1;font-size: .4em  }
+    .log-item{border-bottom: solid 1px #d7d7d7;padding: 5px;}
+    .log-item-cate{min-width: 120px;}
+</style>
+<body>
+<div id="vue_det">
+    <div class="control">
+        <div class="control-left sub-control">
+            <input type="text" v-model="server_url">
+            <button @click="connect">{{is_connect?'断开连接':'连接'}}</button>
+        </div>
+        <div class="control-right sub-control">
+            <textarea type="text" v-model="send_content"></textarea>
+            <button @click="send">发送</button>
+        </div>
+    </div>
+    <div style="clear: both;height: 0px;"></div>
+    <h1>日志内容:</h1>
+    <div class="log-group-wrap">
+        <div class="log-item" v-for="(log ,index ) in logs">
+            <div class="log-item-cate">{{log.category}}</div>
+            <div class="log-content">
+                <pre>{{log.data}}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+
+    var vm = new Vue({
+        el: '#vue_det',
+        data: {
+            is_connect:false,
+            send_content:'',
+            server_url:'192.168.30.130:82',
+            client:null,
+            logs: []
+        },
+        created:function () {},
+        methods: {
+            connect: function () {
+                console.log('connect')
+                if(!this.is_connect){
+                    this.client =  new WebSocket( 'ws://' + this.server_url)
+                    this.client.onopen = this.onOpen
+                    this.client.onerror = this.onError
+                    this.client.onmessage = this.onMessage
+                }else{
+                    this.client.close();
+                    this.is_connect = false
+                }
+            },
+            send:function () {
+                this.client.send(this.send_content)
+            },
+            onOpen:function () {
+                this.is_connect = true
+                console.log('open')
+            },
+            onError:function () {
+                console.log('error')
+            },
+            onMessage:function (message) {
+                console.log('message',message)
+                this.logs.push(JSON.parse(message.data))
+                if(this.logs.length>1000){
+                    this.logs.shift()
+                }
+                //console.log(this.logs)
+            }
+        }
+    })
+</script>
+</body>
+</html>

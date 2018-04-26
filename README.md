@@ -7,7 +7,7 @@
 # 
 使用swoole加速laravel ,原有的项目代码无需变动! 原有的项目代码无需变动! 原有的项目代码无需变动!!!
 
-- 使用swoole加速laravel ,经过测试速度可以提高5倍以上
+- 使用swoole加速laravel
 - 实现websocket和http会话同步机制 ，在websocket断线重连后可以方便的恢复原来的会话
 
 # 安装 
@@ -18,8 +18,15 @@ prefix=/data/wwwroot/laravelTest  #项目安装目录
 php_bin=/data/install/php/bin/php #php执行文件位置
 app_entry=${prefix}/api/api.php   #入口脚本位置
 app_pid_file=/var/run/swoole.pid  #pid文件
+
 ```
-# 运行
+# 运行方式1
+- 修改app/Console/Kernel ,在$commands数组中添加 LaravelServer\ServerCommand::class.
+- php artisan server 启动服务器
+- php artisan stop 启动服务器
+- php artisan restart 重启服务器
+
+# 运行方式2
 - chmod +x server
 - ./smallApi start 启动服务
 - ./smallApi stop 关闭服务
@@ -56,3 +63,9 @@ config/server.php
     post 指定post参数 需要配置header  设置REQUEST_METHOD为 POST
     body 是原始请求体用来实现一些特殊的请求(完善中)
 ```
+
+# 调试 
+- 将resource/debug.html 放到web目录下面
+- http://youhost/debug.html
+- 输入服务端网址 点击连接
+- 发送调试信息到浏览器: \LaravelServer\SwooleLog::debug('not foung'); 
