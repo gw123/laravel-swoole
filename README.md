@@ -11,7 +11,7 @@
 - 实现websocket和http会话同步机制 ，在websocket断线重连后可以方便的恢复原来的会话
 
 # 安装 
-- 直接 git clone git@github.com:gw123/laravel-swoole.git
+- 直接 omposer require gw123/laravel-swoole
 - 修改根目录下的脚本文件 smallApi 修改为自己的安装位置
 ```
 prefix=/data/wwwroot/laravelTest  #项目安装目录
