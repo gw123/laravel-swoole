@@ -1,0 +1,25 @@
+{
+    "name": "gw123/laravel-swoole",
+    "description": "fast you laravel",
+    "license": "MIT",
+    "support": {
+        "source": "https://github.com/gw123/laravel-swoole"
+    },
+    "authors": [
+        {
+            "name": "gw123",
+            "email": "963353840@qq.com"
+        }
+    ],
+    "require": {
+        "symfony/http-foundation": "~3.3",
+        "symfony/http-kernel": "~3.3"
+    },
+    "autoload": {
+        "files": [
+        ],
+        "psr-4": {
+            "LaravelServer\\": "laravel-server/src"
+        }
+    }
+}
