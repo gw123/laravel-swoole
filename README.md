@@ -11,7 +11,7 @@
 - 实现websocket和http会话同步机制 ，在websocket断线重连后可以方便的恢复原来的会话
 
 # 安装 
-- 直接 omposer require gw123/laravel-swoole
+- 直接 composer require gw123/laravel-swoole
 - 修改根目录下的脚本文件 smallApi 修改为自己的安装位置
 ```
 prefix=/data/wwwroot/laravelTest  #项目安装目录
@@ -23,7 +23,7 @@ app_pid_file=/var/run/swoole.pid  #pid文件
 # 运行方式1
 - 修改app/Console/Kernel ,在$commands数组中添加 LaravelServer\ServerCommand::class.
 - php artisan server 启动服务器
-- php artisan stop 启动服务器
+- php artisan stop  停止服务器
 - php artisan restart 重启服务器
 
 # 运行方式2
