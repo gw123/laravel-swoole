@@ -3,7 +3,9 @@ namespace LaravelServer;
 
 class  SwooleLog
 {
+
     public static  $server;
+
     const ERR_SYS = 401;
     const ERR_ARGUMENT = 403;
     const ERR_CLOSED = 402;

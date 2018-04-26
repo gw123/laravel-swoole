@@ -5,7 +5,11 @@ return array(
     'port' => 82,
     'debug_ip' => ['192.168.30.1', '127.0.0.1'],//限制日志输出的服务器
     'swoole' => [
+<<<<<<< HEAD
         'daemonize'=>1, //守护进程化
+=======
+        //'daemonize'=>1, //守护进程化
+>>>>>>> 1bb46809181da09fe8896a70930b83e8eb365cfe
         'pid_file' => '/var/run/swoole.pid',
         'log_file' => '/data/log/swoole.log',
         'worker_num' => 1,

@@ -24,7 +24,9 @@ abstract class SwooleServer
 
     protected $processes;
 
+
     protected  $webSocketFds;
+
     public static $channel;
 
     /**
@@ -49,8 +51,10 @@ abstract class SwooleServer
 
         $this->config = isset($config['swoole']) ? $config['swoole'] : [];
         $this->boot();
+
         //这里不够友好
         SwooleLog::$server  = $this;
+
     }
 
     public function boot()
@@ -76,11 +80,13 @@ abstract class SwooleServer
         $this->swooleServer = $swooleServer;
 
         //记录 websocket 连接
+
 //        self::$webSocketFds = new  \Swoole\Table(65536);
 //        self::$webSocketFds->column('session_id', \Swoole\Table::TYPE_STRING, 64);
 //        self::$webSocketFds->column('is_debug', \Swoole\Table::TYPE_INT, 1);
 //        self::$webSocketFds->column('ip', \Swoole\Table::TYPE_STRING, 15);
 //        self::$webSocketFds->create();
+
     }
 
     public function createProcess()
@@ -156,6 +162,7 @@ abstract class SwooleServer
     {
         SwooleLog::info('client close');
     }
+
 
     public function bordercast($data){
         if(!is_array($data)){

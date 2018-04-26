@@ -8,6 +8,7 @@
 # Short-Description: starts smallApi
 ### END INIT INFO
 
+<<<<<<< HEAD
 php_bin= php
 app_entry= laravel-server/demo/laravelSwoole.php
 app_pid_file=/var/run/swoole.pid
@@ -18,6 +19,18 @@ case "$1" in
 	start)
 		echo -n "Starting server "
 
+=======
+prefix=/data/wwwroot/laravelTest
+php_bin=/data/install/php7.2/bin/php
+app_entry=${prefix}/vendor/gw123/laravel-swoole/laravel-server/demo/laravelSwoole.php
+app_pid_file=/var/run/swoole.pid
+
+#echo ${app_entry}
+
+case "$1" in 
+	start)
+		echo -n "Starting server "
+>>>>>>> 1bb46809181da09fe8896a70930b83e8eb365cfe
 		$php_bin $app_entry
 		if [ "$?" != 0 ] ; then
                         echo " failed"
